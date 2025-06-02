@@ -37,7 +37,7 @@ export default function AuthorSidebar() {
   ]
 
   return (
-    <aside className="fixed top-0 left-0 h-full w-64 bg-white shadow-md">
+    <aside className="top-0 left-0 h-full w-72 bg-white shadow-md">
       <div className="p-4 border-b border-gray-200">
         <h1 className="text-xl font-bold text-indigo-700">Tác giả</h1>
       </div>

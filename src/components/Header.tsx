@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useState, useEffect, useState as useClientState } from 'react'
 
 const navLinks = [
   { name: 'Trang chủ', href: '/' },
@@ -14,10 +14,19 @@ const navLinks = [
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
+  const [isMounted, setIsMounted] = useClientState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  const containerClass = isMounted && pathname === '/author/dashboard'
+    ? 'max-w-3xl'
+    : 'max-w-7xl'
 
   return (
-    <header className="bg-indigo-700 text-white shadow-lg">
-      <div className="container mx-auto px-4 py-4">
+    <header className={` bg-indigo-700 text-white shadow-lg`}>
+      <div className={`container mx-auto px-4 py-4`}>
         <div className="flex justify-between items-center">
           <Link href="/" className="text-2xl font-bold">
             HộiThảo<span className="text-indigo-200">Online</span>

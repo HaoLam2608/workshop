@@ -9,7 +9,7 @@ export default function AuthorLayout({
     <div className="flex min-h-screen bg-gray-50">
       
       <AuthorSidebar />
-      <div className="flex-1 p-8 ml-64">
+      <div className="flex-1 p-8 ml-0">
         
         {children}
       </div>
