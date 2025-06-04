@@ -19,6 +19,8 @@ CREATE TABLE baibao (
     linhvuc VARCHAR(100),
     tomtat TEXT
 );
+ALTER TABLE baibao
+ADD COLUMN status ENUM('dang_cho_phan_cong', 'da_phan_cong') DEFAULT 'dang_cho_phan_cong';
 CREATE TABLE thamgia (
     id_tacgia INT,
     id_baibao INT,
