@@ -1,41 +1,114 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getConferenceById, getArticlesByConference, getAvailableReviewers, assignReviewers } from '@/axios/api';
+import { Conference } from '@/types/conference';
+import { Article } from '@/types/article';
+import { Reviewer } from '@/types/reviewer';
+import moment from 'moment';
 
 export default function Dashboard() {
-  const [papers, setPapers] = useState([
-    { id: 1, title: 'Bài 1', status: 'Đang chờ phân công', date: '2025-06-10', authors: 'Nguyễn Văn A, Trần Thị B', field: 'Trí tuệ nhân tạo' },
-    { id: 2, title: 'Bài 2', status: 'Đã giao cho 2 phản biện', date: '2025-06-12', authors: 'Lê Văn C, Phạm Thị D', field: 'Hệ thống thông tin' },
-    { id: 3, title: 'Bài 3', status: 'Chờ đánh giá', date: '2025-06-15', authors: 'Hoàng Văn E', field: 'An toàn thông tin' },
-  ]);
-
-  const [reviewers, setReviewers] = useState([
-    { id: 1, name: 'GS. Trần Văn X', field: 'Trí tuệ nhân tạo', assignedPapers: 2 },
-    { id: 2, name: 'PGS. Nguyễn Thị Y', field: 'Hệ thống thông tin', assignedPapers: 1 },
-    { id: 3, name: 'TS. Lê Văn Z', field: 'An toàn thông tin', assignedPapers: 0 },
-  ]);
-
+  const [papers, setPapers] = useState([]);
+  const [reviewers, setReviewers] = useState([]);
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [assigning, setAssigning] = useState(false);
   const [selectedReviewers, setSelectedReviewers] = useState([]);
+  const [conference, setConference] = useState<Conference | null>(null);
+  const [loadingConference, setLoadingConference] = useState(true);
+  const [loadingPapers, setLoadingPapers] = useState(true);
+  const [loadingReviewers, setLoadingReviewers] = useState(true);
+  const [assigningError, setAssigningError] = useState(null);
 
-  const assignReviewers = () => {
+  useEffect(() => {
+    const fetchData = async () => {
+      // Lấy thông tin hội thảo
+      const confData = await getConferenceById(2);
+      console.log("Conference data:", confData);
+      setConference(confData);
+
+      // Lấy danh sách bài báo của hội thảo
+      if (confData && confData.maht) {
+        const articles = await getArticlesByConference(confData.maht);
+        console.log("Articles data:", articles);
+        const mappedPapers = articles.map((article) => ({
+          id: article.mabaibao,
+          title: article.tenbaibao,
+          status: article.status === 'dang_cho_phan_cong' ? 'Đang chờ phân công' : 'Đã giao cho 2 phản biện',
+          date: moment().format('YYYY-MM-DD'),
+          authors: article.tacgia.map((author) => author.hoten).join(', '),
+          field: article.linhvuc || 'Chưa xác định',
+          tomtat: article.tomtat || 'Chưa có tóm tắt',
+        }));
+        setPapers(mappedPapers);
+      }
+      setLoadingConference(false);
+      setLoadingPapers(false);
+
+      // Lấy danh sách reviewer
+      const reviewerData = await getAvailableReviewers();
+      console.log("Reviewer data:", reviewerData);
+      const mappedReviewers = reviewerData.map((reviewer) => ({
+        id: reviewer.id,
+        name: reviewer.hoten,
+        field: reviewer.linhvu || 'Chưa xác định',
+        assignedPapers: reviewer.assignedPapers
+      }));
+      setReviewers(mappedReviewers);
+      setLoadingReviewers(false);
+    };
+    fetchData();
+  }, []);
+
+  const assignReviewersHandler = async () => {
     if (selectedReviewers.length !== 2) {
       alert('Vui lòng chọn đúng 2 phản biện cho mỗi bài báo');
       return;
     }
-    
-    const updatedPapers = papers.map(paper => 
-      paper.id === selectedPaper.id 
-        ? { ...paper, status: `Đã giao cho ${selectedReviewers.length} phản biện` } 
-        : paper
-    );
-    
-    setPapers(updatedPapers);
-    setAssigning(false);
-    setSelectedPaper(null);
-    setSelectedReviewers([]);
-    alert('Phân công phản biện thành công!');
+
+    try {
+      setAssigningError(null);
+      const reviewerIds = selectedReviewers.map(reviewer => reviewer.id);
+      const mabaibao = selectedPaper.id;
+      const mapbtc = conference?.mabtc;
+
+      if (!mapbtc) {
+        throw new Error('Không tìm thấy mã ban tổ chức');
+      }
+
+      await assignReviewers(mabaibao, reviewerIds, mapbtc);
+
+      const updatedPapers = papers.map(paper =>
+        paper.id === selectedPaper.id
+          ? { ...paper, status: 'Đã giao cho 2 phản biện' }
+          : paper
+      );
+      setPapers(updatedPapers);
+
+      const updatedReviewers = reviewers.map(reviewer => {
+        if (reviewerIds.includes(reviewer.id)) {
+          return { ...reviewer, assignedPapers: reviewer.assignedPapers + 1 };
+        }
+        return reviewer;
+      });
+      setReviewers(updatedReviewers);
+
+      setAssigning(false);
+      setSelectedPaper(null);
+      setSelectedReviewers([]);
+      alert('Phân công phản biện thành công!');
+
+      const reviewerData = await getAvailableReviewers();
+      const mappedReviewers = reviewerData.map((reviewer) => ({
+        id: reviewer.id,
+        name: reviewer.hoten,
+        field: reviewer.linhvuc || 'Chưa xác định',
+        assignedPapers: reviewer.assignedPapers
+      }));
+      setReviewers(mappedReviewers);
+    } catch (error) {
+      console.error('Error assigning reviewers:', error);
+      setAssigningError(error.message || 'Lỗi khi phân công phản biện');
+    }
   };
 
   const viewPaperDetails = (paper) => {
@@ -60,10 +133,6 @@ export default function Dashboard() {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-900">Hệ thống quản lý hội thảo - Ban tổ chức</h1>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">Xin chào, Admin</span>
-            <button className="px-4 py-2 bg-red-500 text-white rounded-md text-sm">Đăng xuất</button>
-          </div>
         </div>
       </header>
 
@@ -71,39 +140,47 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {/* Conference Info */}
         <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Hội thảo Khoa học Công nghệ Thông tin 2025</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <h3 className="font-semibold text-gray-700">Thời gian</h3>
-              <p className="text-gray-600">15-17/11/2025</p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-700">Địa điểm</h3>
-              <p className="text-gray-600">Trường Đại học XYZ</p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-700">Trạng thái</h3>
-              <p className="text-green-600 font-medium">Đang nhận bài</p>
-            </div>
-          </div>
+          {loadingConference ? (
+            <p className="text-center text-gray-500">Đang tải thông tin hội thảo...</p>
+          ) : conference ? (
+            <>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">{conference.tenhoithao}</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <h3 className="font-semibold text-gray-700">Thời gian</h3>
+                  <p className="text-gray-600">{moment(conference.ngaytochuc).format('DD/MM/YYYY')} {conference.thoigian}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-700">Địa điểm</h3>
+                  <p className="text-gray-600">{conference.diachi}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-700">Hình thức</h3>
+                  <p className="text-green-600 font-medium">{conference.hinhthuctochuc}</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-center text-red-500">Không tìm thấy thông tin hội thảo</p>
+          )}
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="bg-white shadow rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900">Tổng số bài báo</h3>
-            <p className="mt-2 text-3xl font-bold text-blue-600">{papers.length}</p>
+            <p className="mt-2 text-3xl font-bold text-blue-600">{loadingPapers ? '...' : papers.length}</p>
           </div>
           <div className="bg-white shadow rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900">Bài chờ phân công</h3>
             <p className="mt-2 text-3xl font-bold text-yellow-600">
-              {papers.filter(p => p.status.includes('chờ phân công')).length}
+              {loadingPapers ? '...' : papers.filter(p => p.status.includes('chờ phân công')).length}
             </p>
           </div>
           <div className="bg-white shadow rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900">Phản biện đã phân công</h3>
             <p className="mt-2 text-3xl font-bold text-green-600">
-              {papers.filter(p => p.status.includes('giao cho')).length}
+              {loadingPapers ? '...' : papers.filter(p => p.status.includes('giao cho')).length}
             </p>
           </div>
         </div>
@@ -114,49 +191,55 @@ export default function Dashboard() {
             <h3 className="text-lg font-medium text-gray-900">Danh sách bài báo</h3>
           </div>
           <div className="divide-y divide-gray-200">
-            {papers.map((paper) => (
-              <div key={paper.id} className="px-6 py-4 hover:bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-blue-600 truncate">{paper.title}</p>
-                    <p className="text-sm text-gray-500 truncate">{paper.authors}</p>
-                    <p className="text-sm text-gray-500">Lĩnh vực: {paper.field}</p>
-                  </div>
-                  <div className="ml-4 flex flex-col items-end">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      paper.status.includes('chờ phân công') ? 'bg-yellow-100 text-yellow-800' : 
-                      paper.status.includes('giao cho') ? 'bg-green-100 text-green-800' : 
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {paper.status}
-                    </span>
-                    <span className="mt-1 text-xs text-gray-500">Ngày nộp: {paper.date}</span>
-                  </div>
-                  <div className="ml-4 flex space-x-2">
-                    <button 
-                      onClick={() => viewPaperDetails(paper)}
-                      className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200"
-                    >
-                      Chi tiết
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setSelectedPaper(paper);
-                        setAssigning(true);
-                      }}
-                      disabled={!paper.status.includes('chờ phân công')}
-                      className={`px-3 py-1 rounded-md text-sm ${
-                        paper.status.includes('chờ phân công') ? 
-                        'bg-blue-500 text-white hover:bg-blue-600' : 
-                        'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
-                    >
-                      Phân công
-                    </button>
+            {loadingPapers ? (
+              <p className="px-6 py-4 text-gray-500">Đang tải danh sách bài báo...</p>
+            ) : papers.length === 0 ? (
+              <p className="px-6 py-4 text-red-500">Không có bài báo nào trong hội thảo này</p>
+            ) : (
+              papers.map((paper) => (
+                <div key={paper.id} className="px-6 py-4 hover:bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-blue-600 truncate">{paper.title}</p>
+                      <p className="text-sm text-gray-500 truncate">{paper.authors}</p>
+                      <p className="text-sm text-gray-500">Lĩnh vực: {paper.field}</p>
+                    </div>
+                    <div className="ml-4 flex flex-col items-end">
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        paper.status.includes('chờ phân công') ? 'bg-yellow-100 text-yellow-800' : 
+                        paper.status.includes('giao cho') ? 'bg-green-100 text-green-800' : 
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {paper.status}
+                      </span>
+                      <span className="mt-1 text-xs text-gray-500">Ngày nộp: {paper.date}</span>
+                    </div>
+                    <div className="ml-4 flex space-x-2">
+                      <button 
+                        onClick={() => viewPaperDetails(paper)}
+                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200"
+                      >
+                        Chi tiết
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setSelectedPaper(paper);
+                          setAssigning(true);
+                        }}
+                        disabled={!paper.status.includes('chờ phân công')}
+                        className={`px-3 py-1 rounded-md text-sm ${
+                          paper.status.includes('chờ phân công') ? 
+                          'bg-blue-500 text-white hover:bg-blue-600' : 
+                          'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        Phân công
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -171,38 +254,48 @@ export default function Dashboard() {
               </div>
               <div className="p-6">
                 <h4 className="font-medium text-gray-700 mb-4">Danh sách phản biện phù hợp</h4>
-                <div className="space-y-3 mb-6">
-                  {reviewers
-                    .filter(r => r.field === selectedPaper.field && r.assignedPapers < 4)
-                    .map(reviewer => (
-                      <div key={reviewer.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                        <div>
-                          <p className="font-medium">{reviewer.name}</p>
-                          <p className="text-sm text-gray-600">Lĩnh vực: {reviewer.field}</p>
-                          <p className="text-sm text-gray-600">Số bài đã nhận: {reviewer.assignedPapers}/4</p>
+                {loadingReviewers ? (
+                  <p className="text-gray-500">Đang tải danh sách phản biện...</p>
+                ) : reviewers.length === 0 ? (
+                  <p className="text-red-500">Không có phản biện nào phù hợp</p>
+                ) : (
+                  <div className="space-y-3 mb-6">
+                    {reviewers
+                      .filter(r => r.field === selectedPaper.field && r.assignedPapers < 4)
+                      .map(reviewer => (
+                        <div key={reviewer.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                          <div>
+                            <p className="font-medium">{reviewer.name}</p>
+                            <p className="text-sm text-gray-600">Lĩnh vực: {reviewer.field}</p>
+                            <p className="text-sm text-gray-600">Số bài đã nhận: {reviewer.assignedPapers}/4</p>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={selectedReviewers.some(r => r.id === reviewer.id)}
+                            onChange={() => toggleReviewerSelection(reviewer)}
+                            className="h-5 w-5 text-blue-600 rounded"
+                          />
                         </div>
-                        <input
-                          type="checkbox"
-                          checked={selectedReviewers.some(r => r.id === reviewer.id)}
-                          onChange={() => toggleReviewerSelection(reviewer)}
-                          className="h-5 w-5 text-blue-600 rounded"
-                        />
-                      </div>
-                    ))
-                  }
-                </div>
+                      ))
+                    }
+                  </div>
+                )}
+                {assigningError && (
+                  <p className="text-red-500 mb-4">{assigningError}</p>
+                )}
                 <div className="flex justify-end space-x-3">
                   <button
                     onClick={() => {
                       setAssigning(false);
                       setSelectedReviewers([]);
+                      setAssigningError(null);
                     }}
                     className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                   >
                     Hủy bỏ
                   </button>
                   <button
-                    onClick={assignReviewers}
+                    onClick={assignReviewersHandler}
                     disabled={selectedReviewers.length !== 2}
                     className={`px-4 py-2 rounded-md ${
                       selectedReviewers.length === 2 ? 
@@ -242,12 +335,12 @@ export default function Dashboard() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h5 className="font-medium text-gray-700 mb-2">Thông tin chung</h5>
+                    <h5 className="font-medium text-gray-900 mb-2">Thông tin chung</h5>
                     <div className="space-y-2">
-                      <p><span className="text-gray-600">Tác giả:</span> {selectedPaper.authors}</p>
-                      <p><span className="text-gray-600">Lĩnh vực:</span> {selectedPaper.field}</p>
-                      <p><span className="text-gray-600">Ngày nộp:</span> {selectedPaper.date}</p>
-                      <p><span className="text-gray-600">Trạng thái:</span> {selectedPaper.status}</p>
+                      <p><span className="text-gray-800">Tác giả:</span> <span className="text-gray-900 font-semibold">{selectedPaper.authors}</span></p>
+                      <p><span className="text-gray-800">Lĩnh vực:</span> <span className="text-gray-900 font-semibold">{selectedPaper.field}</span></p>
+                      <p><span className="text-gray-800">Ngày nộp:</span> <span className="text-gray-900 font-semibold">{selectedPaper.date}</span></p>
+                      <p><span className="text-gray-800">Trạng thái:</span> <span className="text-gray-900 font-semibold">{selectedPaper.status}</span></p>
                     </div>
                   </div>
                   
@@ -270,7 +363,7 @@ export default function Dashboard() {
                 <div className="mt-6">
                   <h5 className="font-medium text-gray-700 mb-2">Tóm tắt</h5>
                   <div className="bg-gray-50 p-4 rounded-md">
-                    <p className="text-gray-700">Nội dung tóm tắt bài báo sẽ được hiển thị tại đây...</p>
+                    <p className="text-gray-700">{selectedPaper.tomtat}</p>
                   </div>
                 </div>
               </div>

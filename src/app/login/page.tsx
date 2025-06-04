@@ -1,9 +1,10 @@
 'use client'
 import axios from 'axios'
+import { log } from 'console'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import {toast} from "react-toastify"
+import { toast } from "react-toastify"
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     username: '',
@@ -26,20 +27,33 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-   try {
-  const res = await axios.post('/api/user/login', formData);
+    try {
+      const res = await axios.post('/api/user/login', formData);
 
-  if (res.status === 201) {
-    toast.success(res.data.message);
-    router.push('/author/dashboard');
-  }
-} catch (err) {
-  const message = err.response?.data?.error || 'Đăng nhập thất bại';
-  toast.error(message);
-  setError(message);
-} finally {
-  setLoading(false);
-}
+      if (res.status === 201) {
+        const { id, hoten,username } = res.data.data.user;
+        console.log("hhahah",res.data.data.user);
+        localStorage.setItem('userId', id);
+        console.log('User ID:', id);
+        localStorage.setItem('hoten', hoten);
+        console.log('User Name:', hoten);
+        if( username === 'admin') {
+          toast.success(res.data.message);
+          router.push('/Organizer');
+        }else{
+          toast.success(res.data.message);
+          router.push('/author/dashboard');
+        }
+        
+      }
+
+    } catch (err) {
+      const message = err.response?.data?.error || 'Đăng nhập thất bại';
+      toast.error(message);
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -111,9 +125,8 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition ${
-                  loading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
               >
                 {loading ? 'Đang xử lý...' : 'Đăng nhập'}
               </button>

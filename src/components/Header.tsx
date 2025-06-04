@@ -45,21 +45,42 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Auth Buttons - Desktop */}
-          <div className="hidden md:flex space-x-4">
-            <Link
-              href="/login"
-              className="px-4 py-2 rounded-lg hover:bg-indigo-600 transition"
-            >
-              Đăng nhập
-            </Link>
-            <Link
-              href="/register"
-              className="px-4 py-2 bg-white text-indigo-700 rounded-lg hover:bg-indigo-100 transition font-medium"
-            >
-              Đăng ký
-            </Link>
+          {/* Auth Info - Desktop */}
+          <div className="hidden md:flex items-center space-x-4">
+            {typeof window !== 'undefined' && localStorage.getItem('hoten') ? (
+              <>
+                <span>
+                  Xin chào, <strong>{localStorage.getItem('hoten')}</strong>
+                </span>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('hoten')
+                    localStorage.removeItem('userId')
+                    window.location.href = '/login'
+                  }}
+                  className="px-4 py-2 bg-white text-indigo-700 rounded-lg hover:bg-indigo-100 transition font-medium"
+                >
+                  Đăng xuất
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="px-4 py-2 rounded-lg hover:bg-indigo-600 transition"
+                >
+                  Đăng nhập
+                </Link>
+                <Link
+                  href="/register"
+                  className="px-4 py-2 bg-white text-indigo-700 rounded-lg hover:bg-indigo-100 transition font-medium"
+                >
+                  Đăng ký
+                </Link>
+              </>
+            )}
           </div>
+
 
           {/* Mobile Menu Button */}
           <button
