@@ -29,7 +29,7 @@ export default function RegisterPage() {
 
   const handlesubmit = async (e) => {
     e.preventDefault();
-    const res =await axios.post("/api/user",  JSON.stringify(formData));
+    const res =await axios.post("/api/user/register", formData);
     console.log(res);
   }
   return (
