@@ -11,9 +11,14 @@ const hoithaoRoute = require("./routes/hoithaoroute");
 const baibaoRoute = require("./routes/baibairoute");
 const userRoute = require("./routes/userRoute");
 const phancongRoute = require("./routes/phancongRoute");
+const reviewerRoutes = require("./routes/reviewerroute");
+const reviewRoutes = require('./routes/reviewroutes');
+
 app.use("/api/auth", authRoute);
 app.use("/api/hoithao", hoithaoRoute);
 app.use("/api/baibao", baibaoRoute);
 app.use("/api/user", userRoute);
 app.use("/api/phancong", phancongRoute);
+app.use("/api/reviewer", reviewerRoutes); 
+app.use('/api/reviews', reviewRoutes);
 module.exports = app;
