@@ -1,10 +1,12 @@
 'use client'
+
 import axios from 'axios'
-import { log } from 'console'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { toast } from "react-toastify"
+import { toast } from 'react-toastify'
+import React from 'react'
+
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     username: '',
@@ -14,7 +16,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const onchange = (e) => {
+  const onchange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
@@ -22,37 +24,40 @@ export default function LoginPage() {
     }))
   }
 
-  const handlesubmit = async (e) => {
+  const handlesubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
     try {
-      const res = await axios.post('/api/user/login', formData);
+      const res = await axios.post('/api/user/login', formData)
 
       if (res.status === 201) {
-        const { id, hoten,username } = res.data.data.user;
-        console.log("hhahah",res.data.data.user);
-        localStorage.setItem('userId', id);
-        console.log('User ID:', id);
-        localStorage.setItem('hoten', hoten);
-        console.log('User Name:', hoten);
-        if( username === 'admin') {
-          toast.success(res.data.message);
-          router.push('/Organizer');
-        }else{
-          toast.success(res.data.message);
-          router.push('/author/dashboard');
+        const { id, hoten, username } = res.data.data.user
+        console.log('User info:', res.data.data.user)
+
+        localStorage.setItem('userId', id)
+        localStorage.setItem('hoten', hoten)
+
+        toast.success(res.data.message)
+
+        if (username === 'Tdoan') {
+          router.push('/reviewer')
+        } else {
+          router.push('/author/dashboard')
         }
-        
+      }
+    } catch (err: unknown) {
+      let message = 'Đăng nhập thất bại'
+
+      if (axios.isAxiosError(err)) {
+        message = err.response?.data?.error || message
       }
 
-    } catch (err) {
-      const message = err.response?.data?.error || 'Đăng nhập thất bại';
-      toast.error(message);
-      setError(message);
+      toast.error(message)
+      setError(message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -65,7 +70,6 @@ export default function LoginPage() {
           <form className="space-y-6" onSubmit={handlesubmit}>
             {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
-            {/* Email */}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
@@ -82,7 +86,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Mật khẩu */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Mật khẩu
@@ -99,7 +102,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Ghi nhớ + Quên mật khẩu */}
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
@@ -120,20 +122,19 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Nút đăng nhập */}
             <div>
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition ${loading ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                className={`w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition ${
+                  loading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
                 {loading ? 'Đang xử lý...' : 'Đăng nhập'}
               </button>
             </div>
           </form>
 
-          {/* Đăng ký */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Chưa có tài khoản?{' '}
