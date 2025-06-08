@@ -94,6 +94,13 @@ exports.createReview = async (reviewerId, paperId, review) => {
     );
     console.log('Inserted chitiet_phieunhanxet');
 
+    // 3. Cập nhật trạng thái đánh giá của bài báo
+    await db.query(
+      `UPDATE baibao SET danhgia = 'da_danh_gia' WHERE mabaibao = ?`,
+      [paperIdNum]
+    );
+    console.log('Updated baibao.danhgia to da_danh_gia');
+    
     return { maphieuncx };
   } catch (err) {
     console.error('Error in createReview:', err.message, err.stack);

@@ -6,6 +6,7 @@ exports.getAssignedPapers = async (reviewerId) => {
             bb.mabaibao AS id,
             bb.tenbaibao AS title,
             bb.linhvuc AS field,
+            bb.danhgia AS danhgia,
             pc.ngayphancong AS deadline,
             pc.trangthai AS status,
             GROUP_CONCAT(u.hoten SEPARATOR ', ') AS authors
@@ -14,7 +15,7 @@ exports.getAssignedPapers = async (reviewerId) => {
         LEFT JOIN thamgia tg ON bb.mabaibao = tg.id_baibao
         LEFT JOIN users u ON tg.id_tacgia = u.id
         WHERE pc.id_user = ?
-        GROUP BY bb.mabaibao, bb.tenbaibao, bb.linhvuc, pc.ngayphancong, pc.trangthai
+        GROUP BY bb.mabaibao, bb.tenbaibao, bb.linhvuc, bb.danhgia, pc.ngayphancong, pc.trangthai
     `;
 
     try {
