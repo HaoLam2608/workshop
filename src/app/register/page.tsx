@@ -3,6 +3,7 @@ import axios from 'axios'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { toast } from 'react-toastify'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -31,6 +32,13 @@ export default function RegisterPage() {
     e.preventDefault();
     const res =await axios.post("/api/user/register", formData);
     console.log(res);
+    if (res.status === 200 || res.status === 201) {
+          toast.success(res.data.message);
+      
+      router.push('/login');
+    } else {
+      setError('Đăng ký thất bại. Vui lòng thử lại.');
+    }
   }
   return (
     <section className="py-16 bg-gray-50 min-h-screen flex items-center">
@@ -99,7 +107,7 @@ export default function RegisterPage() {
                 type="text"
                 id="diachi"
                 name="diachi"
-                value={formData.email}
+                value={formData.diachi}
                 onChange = {onchange}
                 placeholder="123 Đường ABC, Quận 1, TP.HCM"
                 className="w-full px-4 py-2  rounded-lg focus:ring-2 focus:ring-indigo-500 text-black"

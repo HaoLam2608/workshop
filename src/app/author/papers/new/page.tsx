@@ -17,11 +17,11 @@ export default function NewPaperPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [authors, setAuthors] = useState([
-    { name: '', affiliation: '', email: '' },
+    { id: '', affiliation: '', role: '' },
   ])
 
   const addAuthor = () => {
-    setAuthors([...authors, { name: '', affiliation: '', email: '' }])
+    setAuthors([...authors, { id: '', affiliation: '', role: '' }])
   }
 
   const removeAuthor = (index: number) => {
