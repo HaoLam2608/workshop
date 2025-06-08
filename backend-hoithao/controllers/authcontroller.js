@@ -17,3 +17,11 @@ exports.loginUser = async (req, res) => {
         res.status(401).json({ message: "Đăng nhập thất bại", error: error.message });
     }
 };
+exports.loginBTC = async (req, res) => {
+    try {
+        const result = await userService.loginBTC(req.body);
+        res.status(200).json({ message: "Đăng nhập thành công", data: result });
+    } catch (error) {
+        res.status(401).json({ message: "Đăng nhập thất bại", error: error.message });
+    }
+}

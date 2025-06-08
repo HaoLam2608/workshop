@@ -64,3 +64,21 @@ exports.login = async ({ username, password }) => {
         }
     };
 };
+
+exports.loginBTC= async ({ username, password }) => {
+     const rows = await db.query(
+        'SELECT * FROM bantochuc WHERE usernamebtc = ? AND passwordbtc = ?',
+        [username, password]
+      );
+      console.log(rows);
+      if (rows.length === 0) {
+        throw new Error('Username hoặc password không đúng');
+      }
+
+      const user = rows[0];
+      return {
+        id: user.mabtc,
+        hoten: user.tenbtc,
+        username: user.usernamebtc
+      };
+}

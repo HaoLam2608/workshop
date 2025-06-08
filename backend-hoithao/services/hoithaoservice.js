@@ -20,3 +20,19 @@ exports.getHoiThaoById = async (maht) => {
         throw error; // Ném lỗi để controller xử lý
     }
 };
+exports.getHoithaobybtc = async (mabtc) => {
+    try {
+        const rows = await db.query('SELECT * FROM hoithao WHERE mabtc = ?', [mabtc]);
+        console.log('HoiThao by mabtc:', rows);
+        
+        // Kiểm tra nếu rows rỗng hoặc không phải mảng
+        if (!Array.isArray(rows) || rows.length === 0) {
+            return null; // Không tìm thấy hội thảo
+        }
+        
+        return rows; // Trả về tất cả hội thảo liên quan đến mabtc
+    } catch (error) {
+        console.error('Error querying hoithao by mabtc:', error);
+        throw error; // Ném lỗi để controller xử lý
+    }
+}

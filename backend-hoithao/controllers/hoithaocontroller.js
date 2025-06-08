@@ -31,3 +31,24 @@ exports.getHoiThaoById = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
+exports.getHoithaobybtc = async (req, res) => {
+    try {
+        const mabtc = req.params.mabtc;
+        
+        // Kiểm tra mabtc có phải số hợp lệ không
+        if (!mabtc || isNaN(mabtc)) {
+            return res.status(400).json({ message: 'Mã BTC không hợp lệ' });
+        }
+
+        const hoiThaoList = await hoithaoService.getHoithaobybtc(mabtc);
+        
+        if (!hoiThaoList || hoiThaoList.length === 0) {
+            return res.status(404).json({ message: 'Không tìm thấy hội thảo cho mã BTC này' });
+        }
+
+        res.status(200).json(hoiThaoList);
+    } catch (err) {
+        console.error('Error fetching hoithao by mabtc:', err);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};

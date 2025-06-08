@@ -17,10 +17,10 @@ CREATE TABLE baibao (
     mabaibao INT AUTO_INCREMENT PRIMARY KEY,
     tenbaibao VARCHAR(255) NOT NULL,
     linhvuc VARCHAR(100),
-    tomtat TEXT
+    tomtat TEXT,
+    status ENUM('dang_cho_phan_cong', 'da_phan_cong') DEFAULT 'dang_cho_phan_cong';
 );
-ALTER TABLE baibao
-ADD COLUMN status ENUM('dang_cho_phan_cong', 'da_phan_cong') DEFAULT 'dang_cho_phan_cong';
+
 CREATE TABLE thamgia (
     id_tacgia INT,
     id_baibao INT,
@@ -31,7 +31,9 @@ CREATE TABLE thamgia (
 );
 CREATE TABLE bantochuc (
     mabtc INT AUTO_INCREMENT PRIMARY KEY,
-    tenbtc VARCHAR(255) NOT NULL
+    tenbtc VARCHAR(255) NOT NULL,
+    usernamebtc VARCHAR(50) UNIQUE,
+    passwordbtc VARCHAR(255) NOT NULL,
 );
 CREATE TABLE kyyeu (
     maky INT AUTO_INCREMENT PRIMARY KEY,

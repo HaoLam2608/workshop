@@ -4,6 +4,5 @@ const hoithaoController = require('../controllers/hoithaocontroller');
 
 router.get('/getall', hoithaoController.getAllHoiThao);
 router.get('/:maht', hoithaoController.getHoiThaoById);
-
-module.exports = router;
+router.get('/btc/:mabtc', hoithaoController.getHoithaobybtc);
 module.exports = router;

@@ -1,0 +1,6 @@
+projectKey=haotest
+serverUrl=http://192.168.2.25:9000
+serverVersion=25.6.0.109173
+dashboardUrl=http://192.168.2.25:9000/dashboard?id=haotest
+ceTaskId=31f8ff08-6bb3-4fa0-818d-567e5ec4e9fd
+ceTaskUrl=http://192.168.2.25:9000/api/ce/task?id=31f8ff08-6bb3-4fa0-818d-567e5ec4e9fd

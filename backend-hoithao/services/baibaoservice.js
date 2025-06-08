@@ -88,3 +88,20 @@ exports.getBaibaoByHoiThao = async (maht) => {
         throw error;
     }
 };
+
+exports.getPNXByMaBaibao = async (mabaibao) => {
+    try {
+        const reviews = await db.query(
+            `SELECT p.maphieuncx, p.id_user, u.hoten AS ten_nguoi_phan_bien, p.mabaibao, p.noidung, p.ngaynhanxet, c.machitiet, c.ketqua
+                FROM phieunhanxet p
+                LEFT JOIN chitiet_phieunhanxet c ON p.maphieuncx = c.maphieuncx
+                LEFT JOIN users u ON p.id_user = u.id
+                WHERE p.mabaibao = ?`,
+            [mabaibao]
+        );
+        return reviews;
+    } catch (error) {
+        console.error('Error querying PNX by mabaibao:', error);
+        throw error;
+    }
+}
