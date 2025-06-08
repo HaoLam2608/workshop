@@ -1,14 +1,11 @@
 'use client'
-
-import axios from 'axios'
+import { loginOrganizer } from '@/axios/api';
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { toast } from 'react-toastify'
-import React from 'react'
+import { toast } from "react-toastify"
 
-
-export default function LoginPage() {
+export default function OrganizerLoginPage() {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -17,7 +14,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const onchange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
@@ -25,41 +22,28 @@ export default function LoginPage() {
     }))
   }
 
-  const handlesubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+        console.log("Form data sent:", formData); // Log dữ liệu gửi
 
     try {
-      const res = await axios.post('/api/user/login', formData)
-
-      if (res.status === 201) {
-        const { id, hoten,role } = res.data.data.user
-        console.log('User info:', res.data.data.user)
-
-        localStorage.setItem('userId', id)
-        localStorage.setItem('hoten', hoten)
-
-        toast.success(res.data.message)
-
-        if (role === 'reviewer') {
-          router.push('/reviewer')
-        } else {
-          router.push('/author/dashboard')
-        }
+      const user = await loginOrganizer(formData.username, formData.password);
+      console.log("User data:", user);
+      if (user) {
+        console.log("Organizer Login Response:", user);
+        toast.success("Đăng nhập ban tổ chức thành công!");
+        router.push('/Organizer');
+      } else {
+        throw new Error("Dữ liệu người dùng không hợp lệ");
       }
-    } catch (err: unknown) {
-      let message = 'Đăng nhập thất bại'
-
-      if (axios.isAxiosError(err)) {
-        message = err.response?.data?.error || message
-      }
-
-      toast.error(message)
-      setError(message)
-
+    } catch (err) {
+      const message = err.message || 'Đăng nhập thất bại';
+      toast.error(message);
+      setError(message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -67,27 +51,29 @@ export default function LoginPage() {
     <section className="py-16 bg-gray-50 min-h-screen flex items-center">
       <div className="container mx-auto px-4">
         <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg">
-          <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Đăng nhập</h1>
+          <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Đăng nhập Ban Tổ Chức</h1>
 
-          <form className="space-y-6" onSubmit={handlesubmit}>
+          <form className="space-y-6" onSubmit={handleSubmit}>
             {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
+            {/* Username */}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+                Username
               </label>
               <input
                 type="text"
                 id="username"
                 name="username"
                 value={formData.username}
-                onChange={onchange}
+                onChange={onChange}
                 required
                 placeholder="Nhập username của bạn"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-black"
               />
             </div>
 
+            {/* Mật khẩu */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Mật khẩu
@@ -97,20 +83,21 @@ export default function LoginPage() {
                 id="password"
                 name="password"
                 value={formData.password}
-                onChange={onchange}
+                onChange={onChange}
                 required
                 placeholder="Nhập mật khẩu"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-black"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-black"
               />
             </div>
 
+            {/* Ghi nhớ + Quên mật khẩu */}
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
                   Ghi nhớ đăng nhập
@@ -118,46 +105,36 @@ export default function LoginPage() {
               </div>
 
               <div className="text-sm">
-                <Link href="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
+                <Link href="/forgot-password" className="font-medium text-green-600 hover:text-green-500">
                   Quên mật khẩu?
                 </Link>
               </div>
             </div>
 
+            {/* Nút đăng nhập */}
             <div>
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition ${
-                  loading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-
+                className={`w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {loading ? 'Đang xử lý...' : 'Đăng nhập'}
+                {loading ? 'Đang xử lý...' : 'Đăng nhập Ban Tổ Chức'}
               </button>
             </div>
 
-            {/* Nút Ban Tổ Chức */}
+            {/* Nút quay lại đăng nhập thường */}
             <div>
-              <Link href="/Organizer/login">
+              <Link href="/login">
                 <button
                   type="button"
-                  className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition"
+                  className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition"
                 >
-                  Đăng nhập Ban Tổ Chức
+                  Đăng nhập với tư cách người dùng
                 </button>
               </Link>
             </div>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Chưa có tài khoản?{' '}
-              <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Đăng ký ngay
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </section>

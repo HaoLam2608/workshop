@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getConferenceById, getArticlesByConference, getAvailableReviewers, assignReviewers } from '@/axios/api';
+import { getConferenceById, getArticlesByConference, getAvailableReviewers, assignReviewers, getConferencesByOrganizer, getReviewsByPaper } from '@/axios/api';
 import { Conference } from '@/types/conference';
 import { Article } from '@/types/article';
 import { Reviewer } from '@/types/reviewer';
@@ -18,33 +18,47 @@ export default function Dashboard() {
   const [loadingPapers, setLoadingPapers] = useState(true);
   const [loadingReviewers, setLoadingReviewers] = useState(true);
   const [assigningError, setAssigningError] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      // Lấy thông tin hội thảo
-      const confData = await getConferenceById(2);
+      const mapbtc = parseInt(localStorage.getItem('userId') || '0');
+      console.log("User ID from localStorage:", mapbtc);
+      const conf1Data = await getConferencesByOrganizer(mapbtc);
+      const maht = conf1Data.length > 0 ? conf1Data[0].maht : null;
+      console.log("Selected maht:", maht);
+
+      const confData = await getConferenceById(maht);
       console.log("Conference data:", confData);
       setConference(confData);
 
-      // Lấy danh sách bài báo của hội thảo
       if (confData && confData.maht) {
         const articles = await getArticlesByConference(confData.maht);
         console.log("Articles data:", articles);
-        const mappedPapers = articles.map((article) => ({
-          id: article.mabaibao,
-          title: article.tenbaibao,
-          status: article.status === 'dang_cho_phan_cong' ? 'Đang chờ phân công' : 'Đã giao cho 2 phản biện',
-          date: moment().format('YYYY-MM-DD'),
-          authors: article.tacgia.map((author) => author.hoten).join(', '),
-          field: article.linhvuc || 'Chưa xác định',
-          tomtat: article.tomtat || 'Chưa có tóm tắt',
+
+        // Kiểm tra phiếu nhận xét cho từng bài báo
+        const mappedPapers = await Promise.all(articles.map(async (article) => {
+          const reviewsData = await getReviewsByPaper(article.mabaibao);
+          const hasReviews = reviewsData.length > 0;
+
+          return {
+            id: article.mabaibao,
+            title: article.tenbaibao,
+            status: hasReviews ? 'Đã phản biện' : (article.status === 'dang_cho_phan_cong' ? 'Đang chờ phân công' : 'Đã giao cho 2 phản biện'),
+            date: moment().format('YYYY-MM-DD'),
+            authors: article.tacgia.map((author) => author.hoten).join(', '),
+            field: article.linhvuc || 'Chưa xác định',
+            tomtat: article.tomtat || 'Chưa có tóm tắt',
+          };
         }));
+
         setPapers(mappedPapers);
       }
       setLoadingConference(false);
       setLoadingPapers(false);
 
-      // Lấy danh sách reviewer
       const reviewerData = await getAvailableReviewers();
       console.log("Reviewer data:", reviewerData);
       const mappedReviewers = reviewerData.map((reviewer) => ({
@@ -113,6 +127,31 @@ export default function Dashboard() {
 
   const viewPaperDetails = (paper) => {
     setSelectedPaper(paper);
+  };
+
+  const viewPaperReviews = async (paper) => {
+    setSelectedPaper(paper);
+    setLoadingReviews(true);
+    setShowReviewsModal(true);
+
+    try {
+      const reviewsData = await getReviewsByPaper(paper.id);
+      console.log("Reviews data for paper:", reviewsData);
+      setReviews(reviewsData);
+
+      // Cập nhật trạng thái bài báo nếu có phiếu nhận xét
+      if (reviewsData.length > 0) {
+        const updatedPapers = papers.map(p =>
+          p.id === paper.id ? { ...p, status: 'Đã phản biện' } : p
+        );
+        setPapers(updatedPapers);
+      }
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      setReviews([]);
+    } finally {
+      setLoadingReviews(false);
+    }
   };
 
   const toggleReviewerSelection = (reviewer) => {
@@ -208,6 +247,7 @@ export default function Dashboard() {
                       <span className={`px-2 py-1 text-xs rounded-full ${
                         paper.status.includes('chờ phân công') ? 'bg-yellow-100 text-yellow-800' : 
                         paper.status.includes('giao cho') ? 'bg-green-100 text-green-800' : 
+                        paper.status.includes('Đã phản biện') ? 'bg-purple-100 text-purple-800' :
                         'bg-blue-100 text-blue-800'
                       }`}>
                         {paper.status}
@@ -312,7 +352,7 @@ export default function Dashboard() {
         )}
 
         {/* Paper Details Modal */}
-        {selectedPaper && !assigning && (
+        {selectedPaper && !assigning && !showReviewsModal && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
@@ -350,7 +390,10 @@ export default function Dashboard() {
                       <button className="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
                         Tải xuống bài báo
                       </button>
-                      <button className="w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                      <button 
+                        onClick={() => viewPaperReviews(selectedPaper)}
+                        className="w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                      >
                         Xem kết quả phản biện
                       </button>
                       <button className="w-full px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">
@@ -365,6 +408,65 @@ export default function Dashboard() {
                   <div className="bg-gray-50 p-4 rounded-md">
                     <p className="text-gray-700">{selectedPaper.tomtat}</p>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reviews Modal */}
+        {showReviewsModal && selectedPaper && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 className="text-lg font-medium text-gray-900">Kết quả phản biện: {selectedPaper.title}</h3>
+                <button 
+                  onClick={() => {
+                    setShowReviewsModal(false);
+                    setReviews([]);
+                  }}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <span className="sr-only">Đóng</span>
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-6">
+                {loadingReviews ? (
+                  <p className="text-center text-gray-500">Đang tải kết quả phản biện...</p>
+                ) : reviews.length === 0 ? (
+                  <p className="text-center text-red-500">Chưa có kết quả phản biện nào</p>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.map(review => (
+                      <div key={review.maphieuncx} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <h4 className="text-md font-medium text-gray-900">Phiếu nhận xét #{review.maphieuncx}</h4>
+                          <p className="text-sm text-gray-500">
+                            Ngày nhận xét: {moment(review.ngaynhanxet).format('DD/MM/YYYY HH:mm:ss')}
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <p><span className="font-medium text-gray-700">Người nhận xét:</span> <span className="text-gray-900 font-semibold">{review.ten_nguoi_phan_bien}</span></p>
+                          <p><span className="font-medium text-gray-700">Nội dung:</span> <span className="text-gray-900 font-semibold">{review.noidung}</span></p>
+                          <p><span className="font-medium text-gray-700">Kết quả:</span> <span className={`font-semibold ${review.ketqua === 'Chấp nhận' ? 'text-green-600' : review.ketqua === 'Từ chối' ? 'text-red-600' : 'text-yellow-600'}`}>{review.ketqua}</span></p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => {
+                      setShowReviewsModal(false);
+                      setReviews([]);
+                    }}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                  >
+                    Đóng
+                  </button>
                 </div>
               </div>
             </div>

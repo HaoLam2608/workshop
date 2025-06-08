@@ -209,3 +209,77 @@ export const createReview = async (
     throw error;
   }
 };
+export const loginOrganizer = async (username: string, password: string): Promise<{ id: number; hoten: string; username: string } | null> => {
+  try {
+    const res = await fetch(`${BASE_URL}/auth/login-btc`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log("API RESPONSE for loginOrganizer:", data);
+    console.log("User data:", data.data.user);
+    if (data.data) { 
+      const { id, hoten, username } = data.data; 
+      // Lưu vào localStorage
+      localStorage.setItem('userId', id.toString());
+      localStorage.setItem('hoten', hoten);
+      localStorage.setItem('username', username);
+      return { id, hoten, username };
+    }
+
+    console.warn("API không trả về dữ liệu người dùng hợp lệ");
+    return null;
+  } catch (error) {
+    console.error('Lỗi khi gọi API loginOrganizer:', error);
+    throw error;
+  }
+};
+export const getConferencesByOrganizer = async (mapbtc: number): Promise<Conference[]> => {
+  try {
+    const res = await fetch(`${BASE_URL}/hoithao/btc/${mapbtc}`);
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+    }
+    const data = await res.json();
+    console.log("API RESPONSE for getConferencesByOrganizer:", data);
+
+    return data;
+  } catch (error) {
+    console.error(`Lỗi khi gọi API getConferencesByOrganizer với mapbtc ${mapbtc}:`, error);
+    return [];
+  }
+};
+export const getReviewsByPaper = async (mabaibao: number): Promise<any[]> => {
+  try {
+    const res = await fetch(`${BASE_URL}/baibao/pnx/${mabaibao}`);
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        console.warn(`Không tìm thấy phiếu nhận xét cho bài báo ${mabaibao}`);
+        return [];
+      }
+      const errorData = await res.json();
+      throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log("API RESPONSE for getReviewsByPaper:", data);
+
+    return data;
+
+  } catch (error) {
+    console.error(`Lỗi khi gọi API getReviewsByPaper với mabaibao ${mabaibao}:`, error);
+    return [];
+  }
+};

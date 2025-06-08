@@ -21,10 +21,8 @@ interface ReviewForm {
   finalDecision: string;
 }
 
-
-
 export default function ReviewerPanel() {
-  const reviewerId = 5; // TODO: Lấy động từ context/auth, ví dụ: useAuth()?.user?.id
+  const reviewerId = localStorage.getItem('userId'); // TODO: Lấy động từ context/auth, ví dụ: useAuth()?.user?.id
   const [papers, setPapers] = useState<Paper[]>([]);
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
   const [reviewForm, setReviewForm] = useState<ReviewForm>({
@@ -42,7 +40,18 @@ export default function ReviewerPanel() {
       try {
         const data = await getAssignedPapers(reviewerId);
         console.log('API RESPONSE for getAssignedPapers:', data);
-        setPapers(data);
+
+        // Kiểm tra và hợp nhất dữ liệu từ localStorage
+        const updatedPapers = data.map((paper) => {
+          const storedPaper = localStorage.getItem(`paper_${paper.id}`);
+          if (storedPaper) {
+            const storedData = JSON.parse(storedPaper);
+            return { ...paper, ...storedData };
+          }
+          return paper;
+        });
+
+        setPapers(updatedPapers);
         setError(null);
       } catch (err) {
         console.error('Lỗi khi gọi API:', err);
@@ -78,6 +87,12 @@ export default function ReviewerPanel() {
       return;
     }
 
+    // Kiểm tra nếu bài báo đã được đánh giá
+    const paper = papers.find(p => p.id === paperId);
+    if (paper?.status === 'Đã đánh giá' || paper?.reviewForm) {
+      alert('Bài báo này đã được đánh giá và không thể đánh giá lại.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -86,15 +101,25 @@ export default function ReviewerPanel() {
       const updatedPapers = papers.map((paper) =>
         paper.id === paperId
           ? {
-            ...paper,
-            status: 'Đã đánh giá',
-            reviewForm: { ...reviewForm },
-          }
+              ...paper,
+              status: 'Đã đánh giá',
+              reviewForm: { ...reviewForm },
+            }
           : paper
       );
 
       setPapers(updatedPapers);
       setSelectedPaper(null);
+
+      // Lưu trạng thái vào localStorage
+      const updatedPaper = updatedPapers.find(p => p.id === paperId);
+      if (updatedPaper) {
+        localStorage.setItem(`paper_${paperId}`, JSON.stringify({
+          status: updatedPaper.status,
+          reviewForm: updatedPaper.reviewForm,
+        }));
+      }
+
       alert('Đã gửi đánh giá thành công!');
     } catch (error) {
       alert('Gửi đánh giá thất bại, vui lòng thử lại.');
@@ -114,7 +139,6 @@ export default function ReviewerPanel() {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-900">Hệ thống quản lý hội thảo - Phản biện</h1>
-
         </div>
       </header>
 
@@ -173,6 +197,11 @@ export default function ReviewerPanel() {
                       </button>
                       <button
                         onClick={() => {
+                          // Kiểm tra nếu bài báo đã được đánh giá
+                          if (paper.status === 'Đã đánh giá' || paper.reviewForm) {
+                            alert('Bài báo này đã được đánh giá và không thể đánh giá lại.');
+                            return;
+                          }
                           setSelectedPaper(paper);
                           setReviewForm(
                             paper.reviewForm || {
