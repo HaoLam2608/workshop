@@ -2,7 +2,9 @@ export interface Author {
   id: number;
   hoten: string;
   email: string;
-  vai_tro: string;
+  coquan : string;
+  hocvi : string;
+  vaitro: string;
 }
 
 export enum StatusPaper {

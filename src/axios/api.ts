@@ -1,5 +1,5 @@
 import { Conference } from '@/types/conference';
-import { Article } from '@/types/article';
+import { Article, Author } from '@/types/article';
 import { Reviewer } from '@/types/reviewer';
 
 const BASE_URL = 'http://localhost:2000/api';
@@ -326,3 +326,34 @@ export const getReviewsByPaper = async (mabaibao: number): Promise<any[]> => {
     return [];
   }
 };
+
+export const getAuthorById = async (id: number): Promise<Author | null> => {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const res = await fetch(`${BASE_URL}/user/authors/${id}`, {
+      method: 'GET',
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        console.warn(`Không tìm thấy tác giả với ID: ${id}`);
+        return null;
+      }
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log("API RESPONSE for getAuthorById:", data);
+
+    return data as Author;
+  } catch (error) {
+    console.error('Lỗi khi gọi API getAuthorById:', error);
+    return null;
+  }
+};
+

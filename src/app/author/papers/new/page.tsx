@@ -3,38 +3,74 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PaperPlaneIcon, PlusIcon, TrashIcon } from '@/components/icons'
-import {toast} from "react-toastify"
-import { getAllConferences } from '@/axios/api'
+import { toast } from 'react-toastify'
+import { getAllConferences, getAuthorById } from '@/axios/api'
 import { Conference } from '@/types/conference'
+import { Author } from '@/types/article'
+
 export default function NewPaperPage() {
   const router = useRouter()
-  
+  const [author, setAuthor] = useState<Author | null>(null)
+  const [conferences, setConferences] = useState<Conference[]>([])
+  const [authors, setAuthors] = useState<
+    { id: number; name: string; email: string; affiliation: string; role: string }[]
+  >([])
+
   const [title, setTitle] = useState('')
   const [field, setField] = useState('')
   const [abstract, setAbstract] = useState('')
   const [keywords, setKeywords] = useState('')
   const [conferenceId, setConferenceId] = useState('')
-  const [contactAuthorIndex, setContactAuthorIndex] = useState('')
+  const [contactAuthorIndex, setContactAuthorIndex] = useState('0')
   const [contactPhone, setContactPhone] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [conferences ,setConferences] = useState<Conference[]>([]);
-  const [authors, setAuthors] = useState([
-    { id: '', affiliation: '', role: '' },
-  ])
+
   useEffect(() => {
-      const fetchData = async (): Promise<void> => {
-        try {
-          const data = await getAllConferences()
-          setConferences(data)
-        } catch (err) {
-          console.error('Error fetching conferences:', err)
-        } 
+    const fetchAuthor = async () => {
+      const authorId = localStorage.getItem('userId')
+      if (!authorId) {
+        console.error('Không tìm thấy authorId trong localStorage')
+        return
       }
-      fetchData()
-    }, [])
+
+      try {
+        const response = await getAuthorById(Number(authorId))
+        const fetchedAuthor = response
+        setAuthor(fetchedAuthor)
+
+        setAuthors([
+          {
+            id: fetchedAuthor?.id || 0,
+            name: fetchedAuthor?.hoten || '',
+            email: fetchedAuthor?.email || '',
+            affiliation: fetchedAuthor?.coquan || '',
+            role: 'Tác giả chính',
+          },
+        ])
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin tác giả:', error)
+      }
+    }
+
+    fetchAuthor()
+  }, [])
+
+  useEffect(() => {
+    const fetchConferences = async () => {
+      try {
+        const data = await getAllConferences()
+        setConferences(data)
+      } catch (err) {
+        console.error('Error fetching conferences:', err)
+      }
+    }
+
+    fetchConferences()
+  }, [])
+
   const addAuthor = () => {
-    setAuthors([...authors, { id: '', affiliation: '', role: '' }])
+    setAuthors([...authors, { id: 0, name: '', email: '', affiliation: '', role: '' }])
   }
 
   const removeAuthor = (index: number) => {
@@ -60,6 +96,7 @@ export default function NewPaperPage() {
         alert('Vui lòng chọn tệp PDF.')
         return
       }
+
       const formData = new FormData()
       formData.append('conferenceId', conferenceId)
       formData.append('title', title)
@@ -76,16 +113,14 @@ export default function NewPaperPage() {
         body: formData,
       })
 
-     const data = await res.json();
-      console.log(data);
+      const data = await res.json()
       if (!res.ok) {
-        const data = await res.json()
-        toast.error(data.message || 'Lỗi khi gửi bài báo' )
-        throw new Error(data.message || 'Lỗi khi gửi bài báo');
+        toast.error(data.message || 'Lỗi khi gửi bài báo')
+        throw new Error(data.message || 'Lỗi khi gửi bài báo')
       }
 
-      toast.success("Nộp bài thành công")
-      router.push('/author/papers?success=true')
+      toast.success('Nộp bài thành công')
+      router.push('/author/papers')
     } catch (error) {
       console.error('Lỗi khi nộp bài:', error)
       alert('Có lỗi xảy ra khi nộp bài.')
@@ -108,9 +143,8 @@ export default function NewPaperPage() {
           {/* Thông tin bài báo */}
           <div className="border-b pb-6">
             <h2 className="text-lg font-semibold mb-4">Thông tin bài báo</h2>
-
             <div className="grid grid-cols-1 gap-6">
-               <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 required">Chọn hội thảo</label>
                 <select
                   value={conferenceId}
@@ -118,15 +152,15 @@ export default function NewPaperPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   required
                 >
-                  {conferences.length > 0 ? conferences.map((conference) => 
-                    (
-                      <option value={conference.maht}>{conference.tenhoithao}</option>
-                    )
-                  ): ( <option disabled>Không có hội thảo</option>)}
-                 
-                  
+                  <option value="">-- Chọn hội thảo --</option>
+                  {conferences.map((conference) => (
+                    <option key={conference.maht} value={conference.maht}>
+                      {conference.tenhoithao}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 required">Tên bài báo</label>
                 <input
@@ -146,7 +180,7 @@ export default function NewPaperPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   required
                 >
-                 <option value="">Chọn lĩnh vực</option>
+                  <option value="">Chọn lĩnh vực</option>
                   <option value="Công nghệ thông tin">Công nghệ thông tin</option>
                   <option value="Kỹ thuật">Kỹ thuật</option>
                   <option value="Khoa học tự nhiên">Khoa học tự nhiên</option>
@@ -175,7 +209,27 @@ export default function NewPaperPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   required
                 />
-                <p className="mt-1 text-sm text-gray-500">Ví dụ: AI, machine learning, deep learning</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 required">Số điện thoại liên hệ</label>
+                <input
+                  type="text"
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Chọn tệp PDF</label>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  className="w-full border border-gray-300 rounded px-4 py-2"
+                  required
+                />
               </div>
             </div>
           </div>
@@ -183,9 +237,8 @@ export default function NewPaperPage() {
           {/* Danh sách tác giả */}
           <div className="border-b pb-6">
             <h2 className="text-lg font-semibold mb-4">Thông tin tác giả</h2>
-
             {authors.map((author, index) => (
-              <div key={index} className="mb-6 border border-gray-200 rounded-lg p-4">
+              <div key={index} className="mb-6 border p-4 rounded-lg">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="font-medium">Tác giả {index + 1}</h3>
                   {authors.length > 1 && (
@@ -199,39 +252,39 @@ export default function NewPaperPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1 required">Họ và tên</label>
-                    <input
-                      type="text"
-                      value={author.name}
-                      onChange={(e) => handleAuthorChange(index, 'name', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1 required">Cơ quan</label>
-                    <input
-                      type="text"
-                      value={author.affiliation}
-                      onChange={(e) => handleAuthorChange(index, 'affiliation', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1 required">Email</label>
-                    <input
-                      type="email"
-                      value={author.email}
-                      onChange={(e) => handleAuthorChange(index, 'email', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      required
-                    />
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <input
+                    type="text"
+                    placeholder="Họ và tên"
+                    value={author.name}
+                    onChange={(e) => handleAuthorChange(index, 'name', e.target.value)}
+                    className="border px-3 py-2 rounded"
+                    required
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={author.email}
+                    onChange={(e) => handleAuthorChange(index, 'email', e.target.value)}
+                    className="border px-3 py-2 rounded"
+                    required
+                  />
+                  <input
+                    type="text"
+                    placeholder="Cơ quan"
+                    value={author.affiliation}
+                    onChange={(e) => handleAuthorChange(index, 'affiliation', e.target.value)}
+                    className="border px-3 py-2 rounded"
+                    required
+                  />
+                  <input
+                    type="text"
+                    placeholder="Vai trò"
+                    value={author.role}
+                    onChange={(e) => handleAuthorChange(index, 'role', e.target.value)}
+                    className="border px-3 py-2 rounded"
+                    required
+                  />
                 </div>
               </div>
             ))}
@@ -239,18 +292,13 @@ export default function NewPaperPage() {
             <button
               type="button"
               onClick={addAuthor}
-              className="flex items-center text-indigo-600 hover:text-indigo-800"
+              className="flex items-center text-indigo-600 hover:underline"
             >
               <PlusIcon className="w-5 h-5 mr-1" />
               Thêm tác giả
             </button>
-          </div>
 
-          {/* Tác giả liên hệ */}
-          <div className="border-b pb-6">
-            <h2 className="text-lg font-semibold mb-4">Tác giả liên hệ</h2>
-
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-1 required">Chọn tác giả liên hệ</label>
     <select
@@ -296,33 +344,15 @@ export default function NewPaperPage() {
 </div>
           </div>
 
-          {/* Upload file */}
-          <div>
-            <h2 className="text-lg font-semibold mb-4">Tệp bài báo</h2>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1 required">Upload bài báo (PDF)</label>
-              <input
-                type="file"
-                accept=".pdf"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                required
-              />
-              <p className="mt-1 text-sm text-gray-500">Chỉ chấp nhận file PDF, kích thước tối đa 10MB</p>
-            </div>
-          </div>
-
-          {/* Nút submit */}
-          <div className="pt-4 flex justify-end">
+          {/* Nút nộp */}
+          <div className="pt-4">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+              className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 flex items-center gap-2"
             >
-              {isSubmitting ? 'Đang xử lý...' : <>
-                <PaperPlaneIcon className="w-5 h-5 mr-2" />
-                Nộp bài
-              </>}
+              <PaperPlaneIcon className="w-5 h-5" />
+              {isSubmitting ? 'Đang gửi...' : 'Nộp bài'}
             </button>
           </div>
         </form>

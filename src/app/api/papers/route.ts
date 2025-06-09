@@ -8,7 +8,6 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
 
-    console.log(formData);
     const title = formData.get('title') as string;
     const field = formData.get('field') as string;
     const abstract = formData.get('abstract') as string;
@@ -18,6 +17,7 @@ export async function POST(req: NextRequest) {
     const authorsRaw = formData.get('authors') as string;
     const file = formData.get('file') as File;
     const conferenceId = formData.get('conferenceId') as string;
+
     if (
       !title || !field || !abstract || !keywords ||
       !contactAuthorIndex || !contactPhone || !authorsRaw || !file
@@ -38,32 +38,28 @@ export async function POST(req: NextRequest) {
     const uploaddir = path.join(process.cwd(), 'public', 'uploads');
 
     if (!existsSync(uploaddir)) {
-      mkdirSync(uploaddir, { recursive: true });  // Sửa thành true
+      mkdirSync(uploaddir, { recursive: true });
     }
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Tạo tên file tránh ghi đè
     const timestamp = Date.now();
     const filename = `${timestamp}_${file.name}`;
     const filepath = path.join(uploaddir, filename);
 
     await writeFile(filepath, buffer);
 
-    const data = JSON.stringify({ 
-      
-      tenbaibao: title,
-      linhvuc: field,
-      tomtat: abstract,
-      tacgia: authors,});
+    const now = new Date();
+    const formattedDate = now.toISOString().split('T')[0]; // '2025-06-09'
+
     const res = await fetchApi.post("api/article/addPaper", {
-      maht : conferenceId,
+      maht: conferenceId,
       tenbaibao: title,
       linhvuc: field,
       tomtat: abstract,
       tacgia: authors,
-      ngaynop : timestamp
+      ngaynop: formattedDate,  
     });
 
     return NextResponse.json({ message: "Upload thành công", data: res.data }, { status: 201 });
