@@ -1,6 +1,6 @@
 'use client';
 
-import { getAssignedPapers, createReview } from '@/axios/api';
+import { getAssignedPapers, createReview, getReviewsByPaper, checkReviewStatus } from '@/axios/api';
 import { useState, useEffect } from 'react';
 
 interface Paper {
@@ -39,20 +39,28 @@ export default function ReviewerPanel() {
   });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPapers = async () => {
       try {
         const data = await getAssignedPapers(reviewerId);
+        console.log('API RESPONSE for getAssignedPapers:', data);
 
-        const updatedPapers: Paper[] = data.map((paper: any) => {
+        const updatedPapers: Paper[] = await Promise.all(data.map(async (paper: any) => {
           const storedPaper = localStorage.getItem(`paper_${paper.id}`);
-          if (storedPaper) {
-            const storedData = JSON.parse(storedPaper);
-            return { ...paper, ...storedData };
-          }
-          return paper;
-        });
+          const storedData = storedPaper ? JSON.parse(storedPaper) : null;
+
+          const reviews = await getReviewsByPaper(paper.id);
+          const reviewerHasReviewed = reviews.some((review: any) => review.id_user === reviewerId);
+          const reviewCount = reviews.length;
+
+          return {
+            ...paper,
+            ...storedData,
+            danhgia: reviewerHasReviewed ? 'da_danh_gia' : reviewCount >= 2 ? 'da_danh_gia' : 'chua_danh_gia',
+          };
+        }));
 
         setPapers(updatedPapers);
         setError(null);
@@ -91,13 +99,31 @@ export default function ReviewerPanel() {
 
     const paper = papers.find((p) => p.id === paperId);
     if (paper?.danhgia === 'da_danh_gia') {
-      alert('Bài báo này đã được đánh giá và không thể đánh giá lại.');
+      alert('Bạn đã đánh giá bài báo này hoặc đã đủ 2 phiếu, không thể đánh giá lại.');
+      return;
+    }
+
+    // Kiểm tra trạng thái trước khi gửi
+    try {
+      const status = await checkReviewStatus(reviewerId, paperId);
+      if (status.hasReviewed) {
+        alert('Bạn đã đánh giá bài báo này và không thể đánh giá lại.');
+        return;
+      }
+    } catch (error) {
+      console.error('Lỗi khi kiểm tra trạng thái:', error);
+      setSubmitError('Không thể kiểm tra trạng thái đánh giá. Vui lòng thử lại.');
       return;
     }
 
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       await createReview(reviewerId, paperId, reviewForm);
+
+      const reviews = await getReviewsByPaper(paperId);
+      const reviewerHasReviewed = reviews.some((review: any) => review.id_user === reviewerId);
+      const reviewCount = reviews.length;
 
       const updatedPapers = papers.map((paper) =>
         paper.id === paperId
@@ -105,7 +131,7 @@ export default function ReviewerPanel() {
               ...paper,
               status: 'Đã đánh giá',
               reviewForm: { ...reviewForm },
-              danhgia: 'da_danh_gia',
+              danhgia: reviewerHasReviewed ? 'da_danh_gia' : reviewCount >= 2 ? 'da_danh_gia' : 'chua_danh_gia',
             }
           : paper
       );
@@ -120,15 +146,16 @@ export default function ReviewerPanel() {
           JSON.stringify({
             status: updatedPaper.status,
             reviewForm: updatedPaper.reviewForm,
-            danhgia: 'da_danh_gia',
+            danhgia: updatedPaper.danhgia,
           })
         );
       }
 
       alert('Đã gửi đánh giá thành công!');
     } catch (error) {
-      alert('Gửi đánh giá thất bại, vui lòng thử lại.');
-      console.error(error);
+      console.error('Lỗi khi gửi đánh giá:', error);
+      setSubmitError(error.message || 'Gửi đánh giá thất bại, vui lòng thử lại.');
+      alert(submitError);
     } finally {
       setIsSubmitting(false);
     }
@@ -148,6 +175,7 @@ export default function ReviewerPanel() {
 
       <main className="max-w-7xl mx-auto py-6 px-4">
         {error && <p className="text-center text-red-500 mb-4">{error}</p>}
+        {submitError && <p className="text-center text-red-500 mb-4">{submitError}</p>}
 
         {papers.length === 0 && !error ? (
           <p className="text-center text-gray-500">Chưa có bài báo nào được phân công.</p>
@@ -201,7 +229,7 @@ export default function ReviewerPanel() {
                       <button
                         onClick={() => {
                           if (paper.danhgia === 'da_danh_gia') {
-                            alert('Bài báo này đã được đánh giá và không thể đánh giá lại.');
+                            alert('Bài báo này đã được đánh giá (ít nhất 2 phiếu) hoặc bạn đã đánh giá, không thể đánh giá lại.');
                             return;
                           }
                           setSelectedPaper(paper);
@@ -305,6 +333,7 @@ export default function ReviewerPanel() {
                     {isSubmitting ? 'Đang gửi...' : 'Gửi đánh giá'}
                   </button>
                 </div>
+                {submitError && <p className="text-red-500 mt-2">{submitError}</p>}
               </div>
             </div>
           </div>

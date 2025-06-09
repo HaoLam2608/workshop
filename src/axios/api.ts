@@ -209,6 +209,34 @@ export const createReview = async (
     throw error;
   }
 };
+// services/api.ts
+export const checkReviewStatus = async (reviewerId: number, paperId: number): Promise<{ hasReviewed: boolean }> => {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const res = await fetch(`${BASE_URL}/reviews/check-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reviewerId, paperId }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log("API RESPONSE for checkReviewStatus:", data);
+    return data;
+  } catch (error) {
+    console.error('Lỗi khi gọi API checkReviewStatus:', error);
+    throw error;
+  }
+};
 export const loginOrganizer = async (username: string, password: string): Promise<{ id: number; hoten: string; username: string } | null> => {
   try {
     const res = await fetch(`${BASE_URL}/auth/login-btc`, {
