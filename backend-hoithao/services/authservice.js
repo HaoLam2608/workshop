@@ -8,9 +8,9 @@ exports.register = async (userData) => {
         email,
         hoten,
         diachi,
-        role = "author",
+        role,
         coquan,
-        linhvu,
+        linhvuc,
         hocvi,
         username,
         password
@@ -27,9 +27,9 @@ exports.register = async (userData) => {
 
     // Thêm user vào DB
     const result = await db.query(
-        `INSERT INTO users (email, hoten, diachi, role, coquan, linhvu, hocvi, username, password)
+        `INSERT INTO users (email, hoten, diachi, role, coquan, linhvuc, hocvi, username, password)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [email, hoten, diachi, role, coquan, linhvu, hocvi, username, hashedPassword]
+        [email, hoten, diachi, role, coquan, linhvuc, hocvi, username, hashedPassword]
     );
 
     return { id: result.insertId, username, email, hoten, role };

@@ -1,17 +1,19 @@
 const db = require("../database/pool");
 exports.insertArticle = async(Article)=>{
-   const { tenbaibao, linhvuc, tomtat, tacgia } = Article;
+   const { tenbaibao, linhvuc, tomtat, tacgia , ngaynop , maht  } = Article;
 
    try {
-        const insertAricleQuery = "insert into baibao(tenbaibao, linhvuc, tomtat) values (?, ?, ?)";
-        const result = await db.query(insertAricleQuery , [tenbaibao , linhvuc , tomtat]);
+        const insertAricleQuery = "insert into baibao(tenbaibao, linhvuc, tomtat , tomtat , ngaynop) values (?, ?, ?)";
+        const result = await db.query(insertAricleQuery , [tenbaibao , linhvuc , tomtat , ngaynop]);
         const mabaibao = result.insertId;
+        const insertConferenceQuery = "insert into hoithao_bai(maht , mabaibao) values(? , ?)"
 
         if(Array.isArray(tacgia) && tacgia.length > 0){
             const insertDetailsQuery = "insert into thamgia(id_tacgia, id_baibao, vai_tro) values (?)";
             const values =tacgia.map(tg =>  [tg.id,mabaibao,tg.vaitro]);
 
             await db.query(insertDetailsQuery , values);
+            await db.query(insertConferenceQuery , [maht , mabaibao])
              return { data: { error: false } };
         }
    } catch (error) {

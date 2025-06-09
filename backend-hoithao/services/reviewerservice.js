@@ -33,7 +33,7 @@ exports.getAssignedPapers = async (reviewerId) => {
         return rows.map(paper => ({
             ...paper,
             reviewForm: {
-                scientificValue: '',
+             scientificValue: '',
                 novelty: '',
                 researchResults: '',
                 conclusion: '',
