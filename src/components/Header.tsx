@@ -5,17 +5,11 @@ import { usePathname } from 'next/navigation'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useState, useEffect, useState as useClientState } from 'react'
 
-const navLinks = [
-  { name: 'Trang chủ', href: '/' },
-  { name: 'Giới thiệu hệ thống', href: '/about' },
-  { name: 'Danh sách hội thảo', href: '/conferences' },
-]
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const [isMounted, setIsMounted] = useClientState(false)
-
   useEffect(() => {
     setIsMounted(true)
   }, [])
@@ -23,7 +17,19 @@ export default function Header() {
   const containerClass = isMounted && pathname === '/author/dashboard'
     ? 'max-w-3xl'
     : 'max-w-7xl'
+ const role = localStorage.getItem("vaitro");
 
+const navLinks = [
+  { name: 'Trang chủ', href: '/' },
+  { name: 'Giới thiệu hệ thống', href: '/about' },
+  { name: 'Danh sách hội thảo', href: '/conferences' },
+  ...(role === "author" 
+    ? [{ name: 'Quản lý bài báo', href: '/author/dashboard' }]
+    : role === "reviewer"
+    ? [{ name: "Phản biện bài báo", href: "/reviewer" }]
+    : []
+  )
+];
   return (
     <header className={` bg-indigo-700 text-white shadow-lg`}>
       <div className={`container mx-auto px-4 py-4`}>
@@ -38,7 +44,7 @@ export default function Header() {
               <Link
                 key={link.name}
                 href={link.href}
-                className={`hover:text-indigo-200 transition ${pathname === link.href ? 'font-bold underline' : ''}`}
+                className={`hover:text-indigo-200 transition ${pathname === link.href ? 'font-medium ' : ''}`}
               >
                 {link.name}
               </Link>
@@ -56,6 +62,7 @@ export default function Header() {
                   onClick={() => {
                     localStorage.removeItem('hoten')
                     localStorage.removeItem('userId')
+                     localStorage.removeItem('vaitro')
                     window.location.href = '/login'
                   }}
                   className="px-4 py-2 bg-white text-indigo-700 rounded-lg hover:bg-indigo-100 transition font-medium"

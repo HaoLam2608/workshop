@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const contactPhone = formData.get('contactPhone') as string;
     const authorsRaw = formData.get('authors') as string;
     const file = formData.get('file') as File;
-
+    const conferenceId = formData.get('conferenceId') as string;
     if (
       !title || !field || !abstract || !keywords ||
       !contactAuthorIndex || !contactPhone || !authorsRaw || !file
@@ -51,14 +51,20 @@ export async function POST(req: NextRequest) {
 
     await writeFile(filepath, buffer);
 
-    const data = JSON.stringify({tenbaibao: title,
+    const data = JSON.stringify({ 
+      
+      tenbaibao: title,
       linhvuc: field,
       tomtat: abstract,
       tacgia: authors,});
-    const res = await fetchApi.post("api/article/addPaper", {tenbaibao: title,
+    const res = await fetchApi.post("api/article/addPaper", {
+      maht : conferenceId,
+      tenbaibao: title,
       linhvuc: field,
       tomtat: abstract,
-      tacgia: authors,});
+      tacgia: authors,
+      ngaynop : timestamp
+    });
 
     return NextResponse.json({ message: "Upload thành công", data: res.data }, { status: 201 });
 

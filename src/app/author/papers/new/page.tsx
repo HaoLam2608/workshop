@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PaperPlaneIcon, PlusIcon, TrashIcon } from '@/components/icons'
 import {toast} from "react-toastify"
+import { getAllConferences } from '@/axios/api'
+import { Conference } from '@/types/conference'
 export default function NewPaperPage() {
   const router = useRouter()
   
@@ -11,15 +13,26 @@ export default function NewPaperPage() {
   const [field, setField] = useState('')
   const [abstract, setAbstract] = useState('')
   const [keywords, setKeywords] = useState('')
+  const [conferenceId, setConferenceId] = useState('')
   const [contactAuthorIndex, setContactAuthorIndex] = useState('')
   const [contactPhone, setContactPhone] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
+  const [conferences ,setConferences] = useState<Conference[]>([]);
   const [authors, setAuthors] = useState([
     { id: '', affiliation: '', role: '' },
   ])
-
+  useEffect(() => {
+      const fetchData = async (): Promise<void> => {
+        try {
+          const data = await getAllConferences()
+          setConferences(data)
+        } catch (err) {
+          console.error('Error fetching conferences:', err)
+        } 
+      }
+      fetchData()
+    }, [])
   const addAuthor = () => {
     setAuthors([...authors, { id: '', affiliation: '', role: '' }])
   }
@@ -47,8 +60,8 @@ export default function NewPaperPage() {
         alert('Vui lòng chọn tệp PDF.')
         return
       }
-
       const formData = new FormData()
+      formData.append('conferenceId', conferenceId)
       formData.append('title', title)
       formData.append('field', field)
       formData.append('abstract', abstract)
@@ -97,6 +110,23 @@ export default function NewPaperPage() {
             <h2 className="text-lg font-semibold mb-4">Thông tin bài báo</h2>
 
             <div className="grid grid-cols-1 gap-6">
+               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1 required">Chọn hội thảo</label>
+                <select
+                  value={conferenceId}
+                  onChange={(e) => setConferenceId(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  required
+                >
+                  {conferences.length > 0 ? conferences.map((conference) => 
+                    (
+                      <option value={conference.maht}>{conference.tenhoithao}</option>
+                    )
+                  ): ( <option disabled>Không có hội thảo</option>)}
+                 
+                  
+                </select>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 required">Tên bài báo</label>
                 <input
@@ -116,7 +146,7 @@ export default function NewPaperPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   required
                 >
-                  <option value="">Chọn lĩnh vực</option>
+                 <option value="">Chọn lĩnh vực</option>
                   <option value="Công nghệ thông tin">Công nghệ thông tin</option>
                   <option value="Kỹ thuật">Kỹ thuật</option>
                   <option value="Khoa học tự nhiên">Khoa học tự nhiên</option>
@@ -220,35 +250,50 @@ export default function NewPaperPage() {
           <div className="border-b pb-6">
             <h2 className="text-lg font-semibold mb-4">Tác giả liên hệ</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 required">Chọn tác giả liên hệ</label>
-                <select
-                  value={contactAuthorIndex}
-                  onChange={(e) => setContactAuthorIndex(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  required
-                >
-                  <option value="">Chọn tác giả</option>
-                  {authors.map((author, index) => (
-                    <option key={index} value={index}>
-                      {author.name || `Tác giả ${index + 1}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1 required">Chọn tác giả liên hệ</label>
+    <select
+      value={contactAuthorIndex}
+      onChange={(e) => setContactAuthorIndex(e.target.value)}
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+      required
+    >
+      <option value="">Chọn tác giả</option>
+      {authors.map((author, index) => (
+        <option key={index} value={index}>
+          {author.name || `Tác giả ${index + 1}`}
+        </option>
+      ))}
+    </select>
+  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 required">Số điện thoại liên hệ</label>
-                <input
-                  type="tel"
-                  value={contactPhone}
-                  onChange={(e) => setContactPhone(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  required
-                />
-              </div>
-            </div>
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1 required">Số điện thoại liên hệ</label>
+    <input
+      type="tel"
+      value={contactPhone}
+      onChange={(e) => {
+        const value = e.target.value;
+        // Chỉ cho phép nhập số
+        if (/^\d*$/.test(value)) {
+          setContactPhone(value);
+        }
+      }}
+      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
+        contactPhone && !/^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-689]|9[0-9])[0-9]{7}$/.test(contactPhone)
+          ? 'border-red-500'
+          : 'border-gray-300'
+      }`}
+      required
+      maxLength={11} // Giới hạn độ dài số VN
+      placeholder="Ví dụ: 0912345678"
+    />
+    {contactPhone && !/^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-689]|9[0-9])[0-9]{7}$/.test(contactPhone) && (
+      <p className="mt-1 text-sm text-red-600">Số điện thoại không hợp lệ</p>
+    )}
+  </div>
+</div>
           </div>
 
           {/* Upload file */}

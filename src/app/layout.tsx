@@ -4,6 +4,7 @@ import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { ToastContainer } from 'react-toastify'
+import { AuthProvider } from './contexts/auth'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {

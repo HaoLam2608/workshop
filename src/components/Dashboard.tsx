@@ -64,7 +64,7 @@ export default function Dashboard() {
       const mappedReviewers = reviewerData.map((reviewer) => ({
         id: reviewer.id,
         name: reviewer.hoten,
-        field: reviewer.linhvu || 'Chưa xác định',
+        field: reviewer.linhvuc || 'Chưa xác định',
         assignedPapers: reviewer.assignedPapers
       }));
       setReviewers(mappedReviewers);

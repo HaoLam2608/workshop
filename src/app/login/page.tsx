@@ -39,7 +39,7 @@ export default function LoginPage() {
 
         localStorage.setItem('userId', id)
         localStorage.setItem('hoten', hoten)
-
+        localStorage.setItem('vaitro', role);
         toast.success(res.data.message)
 
         if (role === 'reviewer') {

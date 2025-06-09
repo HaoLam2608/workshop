@@ -7,6 +7,7 @@ import { toast } from 'react-toastify'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
+    role : '',
     hoten: '',
     username: '',
     email: '',
@@ -16,7 +17,6 @@ export default function RegisterPage() {
     hocvi: '',
     password: '',
     confirmPassword: '',
-    role : ''
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -136,6 +136,7 @@ export default function RegisterPage() {
             <div>
                <label className="block text-sm font-medium text-gray-700 mb-1 required">Lĩnh vực nghiên cứu</label>
                 <select
+                  name='linhvuc'
                   value={formData.linhvuc}
                   onChange={onchange}
                   className="w-full px-4 py-2 border text-gray-700 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
@@ -169,6 +170,7 @@ export default function RegisterPage() {
               <div>
                <label className="block text-sm font-medium text-gray-700 mb-1 required">Vai trò</label>
                 <select
+                  name='role'
                   value={formData.role}
                   onChange={onchange}
                   className="w-full px-4 py-2 border text-gray-700 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
