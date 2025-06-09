@@ -6,14 +6,14 @@ exports.insertArticle = async(Article)=>{
         const insertAricleQuery = "insert into baibao(tenbaibao, linhvuc, tomtat , ngaynop) values (?, ?, ? , ?)";
         const result = await db.query(insertAricleQuery , [tenbaibao , linhvuc , tomtat , ngaynop]);
         const mabaibao = result.insertId;
-        const insertConferenceQuery = "insert into hoithao_bai(maht , mabaibao) values(? , ?)"
-
+        const insertConferenceQuery = "insert into hoithao_baibao(maht , mabaibao) values(? , ?)"
+        console.log(tacgia);
         if(Array.isArray(tacgia) && tacgia.length > 0){
             const insertDetailsQuery = "insert into thamgia(id_tacgia, id_baibao, vai_tro) values (?)";
-            const values =tacgia.map(tg =>  [tg.id,mabaibao,tg.vaitro]);
+            const values =tacgia.map(tg =>  [tg.id,mabaibao,tg.role]);
 
             await db.query(insertDetailsQuery , values);
-            await db.query(insertConferenceQuery , [maht , mabaibao])
+            await db.query(insertConferenceQuery , [Number(maht) , mabaibao])
              return { data: { error: false } };
         }
    } catch (error) {
