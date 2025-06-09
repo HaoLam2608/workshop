@@ -20,3 +20,23 @@ exports.getAvailableReviewers = async () => {
         throw error;
     }
 };
+
+exports.getAuthorById = async (id) => {
+    try {
+        const rows = await db.query(
+            `SELECT id, email, hoten, diachi, coquan, linhvuc, hocvi, username, role
+             FROM users
+             WHERE id = ? AND role = 'author'`,
+            [id]
+        );
+
+        if (rows.length === 0) {
+            throw new Error('Không tìm thấy tác giả với ID đã cho');
+        }
+
+        return rows[0];
+    } catch (error) {
+        console.error('Lỗi khi lấy thông tin tác giả theo ID:', error);
+        throw error;
+    }
+};

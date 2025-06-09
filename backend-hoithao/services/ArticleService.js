@@ -3,7 +3,7 @@ exports.insertArticle = async(Article)=>{
    const { tenbaibao, linhvuc, tomtat, tacgia , ngaynop , maht  } = Article;
 
    try {
-        const insertAricleQuery = "insert into baibao(tenbaibao, linhvuc, tomtat , tomtat , ngaynop) values (?, ?, ?)";
+        const insertAricleQuery = "insert into baibao(tenbaibao, linhvuc, tomtat , ngaynop) values (?, ?, ? , ?)";
         const result = await db.query(insertAricleQuery , [tenbaibao , linhvuc , tomtat , ngaynop]);
         const mabaibao = result.insertId;
         const insertConferenceQuery = "insert into hoithao_bai(maht , mabaibao) values(? , ?)"
