@@ -117,11 +117,11 @@ export default function NewPaperPage() {
                   required
                 >
                   <option value="">Chọn lĩnh vực</option>
-                  <option value="it">Công nghệ thông tin</option>
-                  <option value="engineering">Kỹ thuật</option>
-                  <option value="science">Khoa học tự nhiên</option>
-                  <option value="economics">Kinh tế</option>
-                  <option value="education">Giáo dục</option>
+                  <option value="Công nghệ thông tin">Công nghệ thông tin</option>
+                  <option value="Kỹ thuật">Kỹ thuật</option>
+                  <option value="Khoa học tự nhiên">Khoa học tự nhiên</option>
+                  <option value="Kinh tế">Kinh tế</option>
+                  <option value="Giáo dục">Giáo dục</option>
                 </select>
               </div>
 

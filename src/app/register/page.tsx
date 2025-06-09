@@ -15,7 +15,8 @@ export default function RegisterPage() {
     linhvuc: '',
     hocvi: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role : ''
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -44,7 +45,7 @@ export default function RegisterPage() {
     <section className="py-16 bg-gray-50 min-h-screen flex items-center">
       <div className="container mx-auto px-4">
         <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg">
-          <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Đăng ký tác giả</h1>
+          <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Đăng ký người dùng</h1>
 
           <form className="space-y-5" onSubmit={handlesubmit}>
             {/* Họ và tên */}
@@ -133,19 +134,20 @@ export default function RegisterPage() {
 
             {/* Lĩnh vực */}
             <div>
-              <label htmlFor="linhvuc" className="block text-sm font-medium text-gray-700 mb-1">
-                Lĩnh vực nghiên cứu
-              </label>
-              <input
-                type="text"
-                id="linhvuc"
-                name="linhvuc"
-                value={formData.linhvuc}
-                onChange = {onchange}
-                required
-                placeholder="Trí tuệ nhân tạo, Dữ liệu lớn,..."
-                className="w-full px-4 py-2  rounded-lg focus:ring-2 focus:ring-indigo-500 text-black"
-              />
+               <label className="block text-sm font-medium text-gray-700 mb-1 required">Lĩnh vực nghiên cứu</label>
+                <select
+                  value={formData.linhvuc}
+                  onChange={onchange}
+                  className="w-full px-4 py-2 border text-gray-700 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  required
+                >
+                  <option value="">Chọn lĩnh vực</option>
+                  <option value="Công nghệ thông tin">Công nghệ thông tin</option>
+                  <option value="Kỹ thuật">Kỹ thuật</option>
+                  <option value="Khoa học tự nhiên">Khoa học tự nhiên</option>
+                  <option value="Kinh tế">Kinh tế</option>
+                  <option value="Giáo dục">Giáo dục</option>
+                </select>
             </div>
 
             {/* Học vị */}
@@ -164,7 +166,19 @@ export default function RegisterPage() {
                 className="w-full px-4 py-2  rounded-lg focus:ring-2 focus:ring-indigo-500 text-black"
               />
             </div>
-
+              <div>
+               <label className="block text-sm font-medium text-gray-700 mb-1 required">Vai trò</label>
+                <select
+                  value={formData.role}
+                  onChange={onchange}
+                  className="w-full px-4 py-2 border text-gray-700 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  required
+                >
+                  <option value="">Chọn vai trò</option>
+                  <option value="author">Tác giả</option>
+                  <option value="reviewer">Người phản biện</option>
+                </select>
+            </div>
             {/* Mật khẩu */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">

@@ -3,7 +3,22 @@ import { Article } from '@/types/article';
 import { Reviewer } from '@/types/reviewer';
 
 const BASE_URL = 'http://localhost:2000/api';
+export const GetPaperByAuthor = async (authorid : number): Promise<Article[]> => {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(`${BASE_URL}/article/author/${authorid}`);
+    const data = await res.json();
 
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object') return [data];
+    console.warn("API không trả về dữ liệu hợp lệ, trả về mảng rỗng");
+    return [];
+  } catch (error) {
+    console.error('Lỗi khi gọi API GetPaperByAuthor:', error);
+    return [];
+  }
+};
 export const getAllConferences = async (): Promise<Conference[]> => {
   try {
     const controller = new AbortController();

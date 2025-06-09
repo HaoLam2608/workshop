@@ -9,13 +9,13 @@ export default function Home() {
       <HeroSection />
       <ConferenceList />
       <div className="fixed bottom-4 right-4">
-        <Link 
+        {/* <Link 
           href="/author/dashboard" 
           className="px-6 py-3 bg-indigo-600 text-white rounded-lg shadow-lg hover:bg-indigo-700 transition flex items-center"
         >
           <UserIcon className="w-5 h-5 mr-2" />
           Truy cập trang Tác giả
-        </Link>
+        </Link> */}
       </div>
     </>
   )
