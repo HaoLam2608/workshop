@@ -58,7 +58,7 @@ exports.createReview = async (reviewerId, paperId, review) => {
     if (!assignmentCheckRows || assignmentCheckRows.length === 0) {
       throw new Error(`Người dùng ${reviewerIdNum} không được phân công phản biện cho bài báo ${paperIdNum}`);
     }
-
+    
     // 1. Tạo phiếu nhận xét
     console.log('Attempting to insert into phieunhanxet with:', {
       reviewerId: reviewerIdNum,
@@ -105,5 +105,22 @@ exports.createReview = async (reviewerId, paperId, review) => {
   } catch (err) {
     console.error('Error in createReview:', err.message, err.stack);
     throw new Error(`Lỗi khi tạo phiếu nhận xét: ${err.message}`);
+  }
+};
+exports.checkReviewStatus = async (reviewerId, paperId) => {
+  try {
+    const reviewerIdNum = parseInt(reviewerId);
+    const paperIdNum = parseInt(paperId);
+
+    const reviewCheckRows = await getRows(
+      'SELECT COUNT(*) as reviewCount FROM phieunhanxet WHERE id_user = ? AND mabaibao = ?',
+      [reviewerIdNum, paperIdNum]
+    );
+    console.log('reviewCheckRows:', reviewCheckRows);
+
+    return { hasReviewed: reviewCheckRows.reviewCount > 0 };
+  } catch (err) {
+    console.error('Error in checkReviewStatus:', err.message, err.stack);
+    throw new Error(`Lỗi khi kiểm tra trạng thái đánh giá: ${err.message}`);
   }
 };

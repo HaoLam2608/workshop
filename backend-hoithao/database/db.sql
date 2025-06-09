@@ -18,7 +18,7 @@ CREATE TABLE baibao (
     tenbaibao VARCHAR(255) NOT NULL,
     linhvuc VARCHAR(100),
     tomtat TEXT,
-    -- danhgia ENUM('chua_danh_gia', 'da_danh_gia') DEFAULT 'chua_danh_gia',
+    danhgia ENUM('chua_danh_gia', 'da_danh_gia') DEFAULT 'chua_danh_gia',
     ngaynop Date,
     status ENUM('da_phan_bien' ,'dang_cho_phan_cong', 'da_phan_cong') DEFAULT 'dang_cho_phan_cong';
 );
