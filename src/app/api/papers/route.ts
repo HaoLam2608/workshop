@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       tacgia: authors,
       ngaynop: formattedDate,  
     });
-
+    console.log(res);
     return NextResponse.json({ message: "Upload thành công", data: res.data }, { status: 201 });
 
   } catch (error) {

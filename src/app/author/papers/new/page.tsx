@@ -120,7 +120,7 @@ export default function NewPaperPage() {
       }
 
       toast.success('Nộp bài thành công')
-      router.push('/author/papers')
+      // router.push('/author/papers')
     } catch (error) {
       console.error('Lỗi khi nộp bài:', error)
       alert('Có lỗi xảy ra khi nộp bài.')
@@ -211,16 +211,7 @@ export default function NewPaperPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 required">Số điện thoại liên hệ</label>
-                <input
-                  type="text"
-                  value={contactPhone}
-                  onChange={(e) => setContactPhone(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  required
-                />
-              </div>
+             
               <div>
                 <label className="block font-medium mb-1">Chọn tệp PDF</label>
                 <input
@@ -253,38 +244,51 @@ export default function NewPaperPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Họ và tên"
-                    value={author.name}
-                    onChange={(e) => handleAuthorChange(index, 'name', e.target.value)}
-                    className="border px-3 py-2 rounded"
-                    required
-                  />
-                  <input
-                    type="email"
-                    placeholder="Email"
-                    value={author.email}
-                    onChange={(e) => handleAuthorChange(index, 'email', e.target.value)}
-                    className="border px-3 py-2 rounded"
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="Cơ quan"
-                    value={author.affiliation}
-                    onChange={(e) => handleAuthorChange(index, 'affiliation', e.target.value)}
-                    className="border px-3 py-2 rounded"
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="Vai trò"
-                    value={author.role}
-                    onChange={(e) => handleAuthorChange(index, 'role', e.target.value)}
-                    className="border px-3 py-2 rounded"
-                    required
-                  />
+                    <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 required">Họ và tên</label>
+                    <input
+                      type="text"
+                      value={author.name}
+                      onChange={(e) => handleAuthorChange(index, 'name', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 required">Email</label>
+                    <input
+                      type="email"
+                      value={author.email}
+                      onChange={(e) => handleAuthorChange(index, 'email', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 required">Cơ quan</label>
+                    <input
+                      type="text"
+                      value={author.affiliation}
+                      onChange={(e) => handleAuthorChange(index, 'affiliation', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      required
+                    />
+                  </div>
+                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 required">Vai trò</label>
+                    <select
+                      value={author.role}
+                      onChange={(e) => handleAuthorChange(index, 'role', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      required
+                    >
+                      <option value="">Chọn vai trò</option>
+                      <option value="Tác giả chính">Tác giả chính</option>
+                      <option value="Đồng tác giả">Đồng tác giả</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             ))}
@@ -323,7 +327,6 @@ export default function NewPaperPage() {
       value={contactPhone}
       onChange={(e) => {
         const value = e.target.value;
-        // Chỉ cho phép nhập số
         if (/^\d*$/.test(value)) {
           setContactPhone(value);
         }
@@ -334,7 +337,7 @@ export default function NewPaperPage() {
           : 'border-gray-300'
       }`}
       required
-      maxLength={11} // Giới hạn độ dài số VN
+      maxLength={11}
       placeholder="Ví dụ: 0912345678"
     />
     {contactPhone && !/^(0|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-689]|9[0-9])[0-9]{7}$/.test(contactPhone) && (
